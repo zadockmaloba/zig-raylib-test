@@ -12,6 +12,7 @@
 - [x] Link with raylib
 - [ ] Link with raylib using zig dependecies
 - [x] Create basic window
+  <img width="1680" alt="Screenshot 2024-08-08 at 22 49 41" src="https://github.com/user-attachments/assets/3197ee40-653c-41af-b93b-2862b74f3928">
 - [ ] Render basic 2D shapes with raylib (Circle, Triangle, Rectangle)
 - [ ] Render basic 3D objects with raylib (Cube)
 - [ ] Render complex 3D objects with raylib (Cone, Sphere, Donut)
