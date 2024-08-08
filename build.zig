@@ -15,14 +15,19 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    //Add the regex module
-    const raylib = b.dependency("raylib", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    // TODO: Figure out a way to use raylib as a module
+    // const raylib = b.dependency("raylib", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
-    std.debug.print("Raylib path: {s}", .{tmp});
-    //_ = raylib;
+    // _ = raylib;
+
+    // const raylib_builder = @import("./thirdparty/raylib/build.zig");
+
+    // const raylib = try raylib_builder.addRaylib(b, target, optimize, .{});
+
+    // TODO: Add raylib headers and link to libs
 
     const exe = b.addExecutable(.{
         .name = "zig-raylib-test",
@@ -37,6 +42,7 @@ pub fn build(b: *std.Build) void {
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
     b.installArtifact(exe);
+    // b.installArtifact(raylib);
 
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish

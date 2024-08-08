@@ -52,11 +52,16 @@
         //    .lazy = false,
         //},
 
+        // TODO: Figure out a way to use raylib as a module
         .raylib = .{
-            .url = "https://github.com/raysan5/raylib/archive/refs/heads/master.tar.gz",
-            .hash = "1220b7ee0ba0ef9546f945257e25a878212ff55f44dc95c243bc992d635640973226",
-            .lazy = false,
+            .path = "./thirdparty/raylib",
         },
+
+        // .raylib = .{
+        //     .url = "https://github.com/raysan5/raylib/archive/refs/heads/master.tar.gz",
+        //     .hash = "1220b7ee0ba0ef9546f945257e25a878212ff55f44dc95c243bc992d635640973226",
+        //     .lazy = false,
+        // },
     },
 
     // Specifies the set of files and directories that are included in this package.
