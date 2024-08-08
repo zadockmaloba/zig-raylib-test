@@ -27,14 +27,57 @@ pub fn build(b: *std.Build) void {
 
     // const raylib = try raylib_builder.addRaylib(b, target, optimize, .{});
 
-    // TODO: Add raylib headers and link to libs
-
     const exe = b.addExecutable(.{
         .name = "zig-raylib-test",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
+
+    exe.linkLibC();
+    exe.addObjectFile(switch (target.result.os.tag) {
+        .windows => b.path("./thirdparty/raylib/zig-out/lib/raylib.lib"),
+        .linux => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        .macos => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        .emscripten => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        else => @panic("Unsupported OS"),
+    });
+
+    exe.addIncludePath(b.path("./thirdparty/raylib/src"));
+    exe.addIncludePath(b.path("./thirdparty/raylib/src/external"));
+    exe.addIncludePath(b.path("./thirdparty/raylib/src/external/glfw/include"));
+
+    switch (target.result.os.tag) {
+        .windows => {
+            exe.linkSystemLibrary("winmm");
+            exe.linkSystemLibrary("gdi32");
+            exe.linkSystemLibrary("opengl32");
+
+            exe.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .linux => {
+            exe.linkSystemLibrary("GL");
+            exe.linkSystemLibrary("rt");
+            exe.linkSystemLibrary("dl");
+            exe.linkSystemLibrary("m");
+            exe.linkSystemLibrary("X11");
+
+            exe.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .macos => {
+            exe.linkFramework("Foundation");
+            exe.linkFramework("Cocoa");
+            exe.linkFramework("OpenGL");
+            exe.linkFramework("CoreAudio");
+            exe.linkFramework("CoreVideo");
+            exe.linkFramework("IOKit");
+
+            exe.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        else => {
+            @panic("Unsupported OS");
+        },
+    }
 
     //exe.root_module.addImport("raylib", raylib.module("raylib"));
 

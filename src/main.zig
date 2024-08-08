@@ -1,19 +1,33 @@
 const std = @import("std");
 
-pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+const ray = @cImport({
+    @cInclude("raylib.h");
+});
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+pub fn main() void {
+    const screen_width = 800;
+    const screen_height = 450;
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+    ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    defer ray.CloseWindow(); // Close window and OpenGL context
 
-    try bw.flush(); // don't forget to flush!
+    ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+
+    while (!ray.WindowShouldClose()) // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        ray.BeginDrawing();
+        defer ray.EndDrawing();
+
+        ray.ClearBackground(ray.RAYWHITE);
+        ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
+        //----------------------------------------------------------------------------------
+    }
 }
 
 test "simple test" {
