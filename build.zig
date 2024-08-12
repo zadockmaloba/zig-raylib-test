@@ -119,6 +119,51 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    exe_unit_tests.linkLibC();
+    exe_unit_tests.addObjectFile(switch (target.result.os.tag) {
+        .windows => b.path("./thirdparty/raylib/zig-out/lib/raylib.lib"),
+        .linux => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        .macos => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        .emscripten => b.path("./thirdparty/raylib/zig-out/lib/libraylib.a"),
+        else => @panic("Unsupported OS"),
+    });
+
+    exe_unit_tests.addIncludePath(b.path("./thirdparty/raylib/src"));
+    exe_unit_tests.addIncludePath(b.path("./thirdparty/raylib/src/external"));
+    exe_unit_tests.addIncludePath(b.path("./thirdparty/raylib/src/external/glfw/include"));
+
+    switch (target.result.os.tag) {
+        .windows => {
+            exe_unit_tests.linkSystemLibrary("winmm");
+            exe_unit_tests.linkSystemLibrary("gdi32");
+            exe_unit_tests.linkSystemLibrary("opengl32");
+
+            exe_unit_tests.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .linux => {
+            exe_unit_tests.linkSystemLibrary("GL");
+            exe_unit_tests.linkSystemLibrary("rt");
+            exe_unit_tests.linkSystemLibrary("dl");
+            exe_unit_tests.linkSystemLibrary("m");
+            exe_unit_tests.linkSystemLibrary("X11");
+
+            exe_unit_tests.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        .macos => {
+            exe_unit_tests.linkFramework("Foundation");
+            exe_unit_tests.linkFramework("Cocoa");
+            exe_unit_tests.linkFramework("OpenGL");
+            exe_unit_tests.linkFramework("CoreAudio");
+            exe_unit_tests.linkFramework("CoreVideo");
+            exe_unit_tests.linkFramework("IOKit");
+
+            exe_unit_tests.defineCMacro("PLATFORM_DESKTOP", null);
+        },
+        else => {
+            @panic("Unsupported OS");
+        },
+    }
+
     //exe_unit_tests.root_module.addImport("raylib", raylib.module("raylib"));
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
