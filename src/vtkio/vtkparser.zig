@@ -154,7 +154,7 @@ pub const VtkParser = struct {
                         },
                         VtkParserState.TITLE_DECL => {
                             //TODO: parse title
-                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme });
+                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme }) ++ " ";
                         },
                         //VtkParserState.FILETYPE_DECL => {},
                         VtkParserState.DATASETTYPE_DECL => {},
