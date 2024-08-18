@@ -32,6 +32,14 @@ const FileType = enum {
     Binary,
 };
 
+const DataSetType = enum {
+    STRUCTURED_POINTS,
+    STRUCTURED_GRID,
+    UNSTRUCTURED_GRID,
+    RECTILINIEAR_GRID,
+    POLYDATA,
+};
+
 const Version = struct {
     major: u32,
     minor: u32,
@@ -50,6 +58,10 @@ const Header = struct {
     title: []const u8,
 };
 
+const Data = struct {
+    dataset: ?DataSetType = null,
+};
+
 // https://people.sc.fsu.edu/~jburkardt/data/vtk/vtk.html
 const VtkParserState = enum {
     NOOP,
@@ -64,6 +76,7 @@ pub const VtkParser = struct {
     byteOrder: ByteOrder = undefined,
     state: VtkParserState,
     header: Header = undefined,
+    data: Data = undefined,
     arena: std.heap.ArenaAllocator,
     tokenizer: Tokenizer = undefined,
 
@@ -112,6 +125,10 @@ pub const VtkParser = struct {
             .fileType = undefined,
         };
 
+        var tmpData = Data{
+            .dataset = null,
+        };
+
         for (tokens) |token| {
             switch (token.typ) {
                 TokenType.VERSION_KEYWORD => {
@@ -138,6 +155,10 @@ pub const VtkParser = struct {
 
                     continue;
                 },
+                TokenType.DATASET => {
+                    self.state = .DATASETTYPE_DECL;
+                    continue;
+                },
                 else => {
                     switch (self.state) {
                         VtkParserState.VERSION_DECL => {
@@ -154,10 +175,19 @@ pub const VtkParser = struct {
                         },
                         VtkParserState.TITLE_DECL => {
                             //TODO: parse title
-                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme }) ++ " ";
+                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme });
                         },
                         //VtkParserState.FILETYPE_DECL => {},
-                        VtkParserState.DATASETTYPE_DECL => {},
+                        VtkParserState.DATASETTYPE_DECL => {
+                            defer self.state = .NOOP;
+                            std.debug.print("Dataset type: {s} \n", .{token.lexeme});
+                            inline for (std.meta.fields(DataSetType)) |field| {
+                                if (std.mem.eql(u8, token.lexeme, field.name))
+                                    tmpData.dataset = @field(DataSetType, field.name);
+                            }
+
+                            if (tmpData.dataset == null) return error.UnsupportedType;
+                        },
                         else => {},
                     }
                 },
