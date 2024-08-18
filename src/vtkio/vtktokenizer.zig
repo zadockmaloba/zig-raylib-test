@@ -189,6 +189,6 @@ pub const Tokenizer = struct {
             //try self.processByte(byte_buffer, &reader);
         }
 
-        std.debug.print("Tokens: {any}", .{self.tokens});
+        std.debug.print("Tokens: {any} \n", .{self.tokens});
     }
 };

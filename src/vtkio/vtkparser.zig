@@ -52,13 +52,17 @@ const Header = struct {
 
 // https://people.sc.fsu.edu/~jburkardt/data/vtk/vtk.html
 const VtkParserState = enum {
+    NOOP,
+    INIT,
     VERSION_DECL,
     TITLE_DECL,
     FILETYPE_DECL,
+    DATASETTYPE_DECL,
 };
 
 pub const VtkParser = struct {
     byteOrder: ByteOrder = undefined,
+    state: VtkParserState,
     header: Header = undefined,
     arena: std.heap.ArenaAllocator,
     tokenizer: Tokenizer = undefined,
@@ -66,6 +70,7 @@ pub const VtkParser = struct {
     pub fn init(allocator: std.mem.Allocator) VtkParser {
         //var tmp_arena = std.heap.ArenaAllocator.init(allocator);
         return .{
+            .state = .INIT,
             .arena = std.heap.ArenaAllocator.init(allocator),
             //.tokenizer = Tokenizer.init(tmp_arena.allocator()),
         };
@@ -96,6 +101,68 @@ pub const VtkParser = struct {
         //try self.fparse(&reader);
 
         try self.tokenizer.start(&reader);
+
+        const tokens = self.tokenizer.tokens.allocatedSlice();
+
+        var title_buffer: []const u8 = "";
+
+        var tmpHeader = Header{
+            .version = undefined,
+            .title = undefined,
+            .fileType = undefined,
+        };
+
+        for (tokens) |token| {
+            switch (token.typ) {
+                TokenType.VERSION_KEYWORD => {
+                    self.state = .VERSION_DECL;
+                    continue;
+                },
+                TokenType.ASCII => {
+                    self.state = .NOOP;
+
+                    tmpHeader.title = title_buffer;
+                    tmpHeader.fileType = .Ascii;
+                    self.header = tmpHeader;
+
+                    std.debug.print("Header: \n {any} \n", .{self.header});
+
+                    continue;
+                },
+                TokenType.BINARY => {
+                    self.state = .NOOP;
+
+                    tmpHeader.title = title_buffer;
+                    tmpHeader.fileType = .Binary;
+                    self.header = tmpHeader;
+
+                    continue;
+                },
+                else => {
+                    switch (self.state) {
+                        VtkParserState.VERSION_DECL => {
+                            std.debug.print("Version: {s} \n", .{token.lexeme});
+                            var val_it = std.mem.splitAny(u8, token.lexeme, ".");
+                            const tmp_major = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
+                            const tmp_minor = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
+
+                            tmpHeader.version = .{
+                                .major = tmp_major,
+                                .minor = tmp_minor,
+                            };
+                            self.state = .TITLE_DECL;
+                        },
+                        VtkParserState.TITLE_DECL => {
+                            //TODO: parse title
+                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme });
+                        },
+                        //VtkParserState.FILETYPE_DECL => {},
+                        VtkParserState.DATASETTYPE_DECL => {},
+                        else => {},
+                    }
+                },
+            }
+        }
     }
 
     fn fparse(self: *@This(), reader: ParserFileReader) !void {
