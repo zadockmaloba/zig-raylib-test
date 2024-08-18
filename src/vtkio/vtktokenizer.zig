@@ -26,6 +26,16 @@ pub const TokenType = enum {
     IDENTIFIER,
     NUMERIC_LITERAL,
     STRING_LITERAL,
+    TERMINAL_CHARACTER,
+    ASCII,
+    BINARY,
+    DATASET,
+    STRUCTURED_POINTS,
+    STRUCTURED_GRID,
+    UNSTRUCTURED_GRID,
+    POLYDATA,
+    RECTILINIER_GRID,
+    POINT_DATA,
 };
 
 pub const BuiltinTypes = enum(u8) {
@@ -41,10 +51,15 @@ pub const BuiltinTypes = enum(u8) {
     u64,
     i64,
     f64,
-    Bool,
-    String,
-    Struct,
-    @"fn",
+    ASCII,
+    BINARY,
+    DATASET,
+    STRUCTURED_POINTS,
+    STRUCTURED_GRID,
+    UNSTRUCTURED_GRID,
+    POLYDATA,
+    RECTILINIER_GRID,
+    POINT_DATA,
 };
 
 pub const Token = struct {
@@ -105,8 +120,6 @@ pub const Tokenizer = struct {
             if (self.current_token.typ == .IDENTIFIER) {
                 if (std.mem.eql(u8, self.current_token.lexeme, "Version"))
                     self.current_token.typ = .VERSION_KEYWORD
-                else if (std.mem.eql(u8, self.current_token.lexeme, "return"))
-                    self.current_token.typ = .RET_KEYWORD
                 else {
                     inline for (std.meta.fields(BuiltinTypes)) |field| {
                         //std.debug.print("{s} \n", .{field.name});
@@ -168,160 +181,7 @@ pub const Tokenizer = struct {
                     //TODO: Make this cleaner
                     if (self.not_string_or_comment()) {
                         if (self.current_token.typ == .NUMERIC_LITERAL)
-                            try self.buffer.append(byte_buffer)
-                        else {
-                            if (self.buffer.items.len > 0) {
-                                try self.end_token();
-                            }
-                            self.current_token.typ = .ACCESS_OPERATOR;
-                            try self.buffer.append('.');
-                            try self.end_token();
-                        }
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '{' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .SCOPE_START;
-                        try self.buffer.append('{');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '}' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .SCOPE_END;
-                        try self.buffer.append('}');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '(' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .PARAMS_START;
-                        try self.buffer.append('(');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                ')' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .PARAMS_END;
-                        try self.buffer.append(')');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '=' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .ASSIGNMENT_OPERATOR;
-                        try self.buffer.append('=');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '+' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .ADD_OPERATOR;
-                        try self.buffer.append('+');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '-' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .SUB_OPERATOR;
-                        try self.buffer.append('-');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '*' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .MUL_OPERATOR;
-                        try self.buffer.append('*');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '/' => {
-                    if (self.not_string_or_comment()) {
-                        //Check if the next byte is a '/' so that we can make it a comment
-                        if (try reader.readByte() == '/') {
-                            self.current_token.typ = .COMMENT;
-                        } else {
-                            if (self.buffer.items.len > 0) {
-                                try self.end_token();
-                            }
-                            self.current_token.typ = .DIV_OPERATOR;
-                            try self.buffer.append('/');
-                            try self.end_token();
-                        }
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '&' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .AND_OPERATOR;
-                        try self.buffer.append('&');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '|' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .OR_OPERATOR;
-                        try self.buffer.append('|');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '!' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .NOT_OPERATOR;
-                        try self.buffer.append('!');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '<' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .LESS_OPERATOR;
-                        try self.buffer.append('<');
-                        try self.end_token();
-                    } else try self.buffer.append(byte_buffer);
-                },
-                '>' => {
-                    if (self.not_string_or_comment()) {
-                        if (self.buffer.items.len > 0) {
-                            try self.end_token();
-                        }
-                        self.current_token.typ = .GREATER_OPERATOR;
-                        try self.buffer.append('>');
-                        try self.end_token();
+                            try self.buffer.append(byte_buffer);
                     } else try self.buffer.append(byte_buffer);
                 },
                 else => {},
