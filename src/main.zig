@@ -38,9 +38,9 @@ test "simple test" {
     try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
 
-test "Display basic window" {
-    const screen_width = 800;
-    const screen_height = 450;
+test "Simple VTK file parsing test" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer std.debug.assert(gpa.deinit() == std.heap.Check.ok);
 
     ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
     errdefer ray.CloseWindow();
