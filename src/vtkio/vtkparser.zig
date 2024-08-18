@@ -61,18 +61,19 @@ pub const VtkParser = struct {
     byteOrder: ByteOrder = undefined,
     header: Header = undefined,
     arena: std.heap.ArenaAllocator,
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer = undefined,
 
     pub fn init(allocator: std.mem.Allocator) VtkParser {
-        const tmp_arena = std.heap.ArenaAllocator.init(allocator);
+        //var tmp_arena = std.heap.ArenaAllocator.init(allocator);
         return .{
-            .arena = tmp_arena,
-            .tokenizer = Tokenizer.init(tmp_arena.allocator()),
+            .arena = std.heap.ArenaAllocator.init(allocator),
+            //.tokenizer = Tokenizer.init(tmp_arena.allocator()),
         };
     }
 
     pub fn deinit(self: *@This()) void {
         self.arena.deinit();
+        //self.tokenizer.deinit();
     }
 
     //Evaluate string directly
@@ -87,25 +88,28 @@ pub const VtkParser = struct {
         var file = try std.fs.cwd().openFile(filepath, .{});
         defer file.close();
 
-        var buffered = std.io.bufferedReader(file.reader());
-        const reader = buffered.reader();
+        self.tokenizer = Tokenizer.init(self.arena.allocator());
 
-        self.fparse(reader);
+        var buffered = std.io.bufferedReader(file.reader());
+        var reader = buffered.reader();
+
+        //try self.fparse(&reader);
+
+        try self.tokenizer.start(&reader);
     }
 
     fn fparse(self: *@This(), reader: ParserFileReader) !void {
-        _ = self;
-        var byte_buffer: u8 = undefined;
+        var buffer: []u8 = undefined;
 
         while (true) {
-            byte_buffer = reader.readByte() catch |err| switch (err) {
-                error.EndOfStream => break,
-                else => return err,
-            };
+            buffer = try reader.readUntilDelimiterOrEofAlloc(self.arena.allocator(), '\n', 1024) orelse break;
 
-            std.debug.print("{c}", .{byte_buffer});
+            std.debug.print("{s} \n", .{buffer});
 
-            switch (byte_buffer) {}
+            if (std.mem.startsWith(u8, buffer, "#")) {
+                std.debug.print("Found version line \n", .{});
+                _ = try version(buffer);
+            }
         }
     }
 
@@ -204,8 +208,9 @@ pub const VtkParser = struct {
     // Implement other functions similarly...
 
     fn expectToken(index: *usize, input: []u8, token: []const u8) !void {
-        if (std.mem.startsWith(u8, input[index.*..index.*], token)) {
-            index += token.len;
+        skipWhitespace(index, input);
+        if (std.mem.startsWith(u8, input[index.*..], token)) {
+            index.* += token.len;
         } else {
             return error.UnexpectedToken;
         }
