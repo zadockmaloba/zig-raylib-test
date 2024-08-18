@@ -1,4 +1,5 @@
 const std = @import("std");
+const vtkparser = @import("vtkio/vtkparser.zig").VtkParser;
 
 const ray = @cImport({
     @cInclude("raylib.h");
