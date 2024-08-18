@@ -255,20 +255,46 @@ pub const VtkParser = struct {
         return result;
     }
 
-    fn parseAsciiVec(comptime T: type, input: []const u8, n: usize) ![]T {
-        const result: []T = undefined;
-        _ = input;
-        _ = n;
-        // TODO: Implement ASCII parsing logic specific to T here
+    fn parseAsciiVec(self: *@This(), comptime T: type, input: []const u8, n: usize) ![]T {
+        var result = try self.arena.allocator().alloc(T, n);
+
+        // Iterate over the input, parse ASCII representation to T
+        for (input[0..n], 0) |_, i| {
+            switch (T) {
+                u8 => |_| {
+                    const parsed_value = try std.fmt.parseInt(u8, input[i..], 10);
+                    result[i] = parsed_value;
+                },
+                i8 => |_| {
+                    const parsed_value = try std.fmt.parseInt(i8, input[i..], 10);
+                    result[i] = parsed_value;
+                },
+                else => return error.UnsupportedType,
+            }
+        }
         return result;
     }
 
     fn parseBinaryVec(comptime T: type, comptime BO: type, input: []const u8, n: usize) ![]T {
-        const result: []T = undefined;
-        _ = BO;
-        _ = input;
-        _ = n;
-        // TODO: Implement Binary parsing logic specific to T and BO here
+        _ = BO; //TODO: Implement validating endianness
+        const allocator = std.heap.page_allocator;
+        var result = try allocator.alloc(T, n);
+
+        // Assuming BO is byte order (BigEndian or LittleEndian)
+        for (input[0 .. n * @sizeOf(T)], 0) |_, i| {
+            const slice = input[i * @sizeOf(T) .. (i + 1) * @sizeOf(T)];
+            switch (T) {
+                u8 => |_| {
+                    result[i] = slice[0]; // u8 doesn't depend on byte order
+                },
+                i8 => |_| {
+                    result[i] = @bitCast(slice[0]); // Cast bytes directly to i8
+                },
+                else => |_| {
+                    return error.UnsupportedType;
+                },
+            }
+        }
         return result;
     }
 
