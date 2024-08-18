@@ -213,12 +213,12 @@ pub const VtkParser = struct {
 
     fn parseU32(index: *usize, input: []u8) !u32 {
         const value = try std.fmt.parseUnsigned(u32, input[index.*..], 10);
-        index.* += value.len;
+        index.* += @sizeOf(u32);
         return value;
     }
 
     fn skipWhitespace(index: *usize, input: []u8) void {
-        while (*index < input.len and std.unicode.isWhitespace(input[index.*])) {
+        while (index.* < input.len and std.ascii.isWhitespace(input[index.*])) {
             index.* += 1;
         }
     }
