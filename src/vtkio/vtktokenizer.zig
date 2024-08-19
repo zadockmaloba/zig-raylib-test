@@ -27,8 +27,10 @@ pub const TokenType = enum {
     NUMERIC_LITERAL,
     STRING_LITERAL,
     TERMINAL_CHARACTER,
+    //Header elements
     ASCII,
     BINARY,
+    //Data structure
     DATASET,
     STRUCTURED_POINTS,
     STRUCTURED_GRID,
@@ -36,6 +38,15 @@ pub const TokenType = enum {
     POLYDATA,
     RECTILINIER_GRID,
     POINT_DATA,
+    //Data descriptors
+    DIMESNSIONS, //nx ny nz
+    SPACING, //sx sy yz
+    POINTS, //n datatype
+    LINES, //n size
+    VERTICES, //n size
+    POLYGONS, //n size
+    TRIANGLE_STRIPS, //n size
+    ORIGIN,
 };
 
 pub const BuiltinTypes = enum(u8) {
