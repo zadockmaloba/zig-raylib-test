@@ -32,14 +32,6 @@ const FileType = enum {
     Binary,
 };
 
-const DataSetType = enum {
-    STRUCTURED_POINTS,
-    STRUCTURED_GRID,
-    UNSTRUCTURED_GRID,
-    RECTILINIEAR_GRID,
-    POLYDATA,
-};
-
 const Version = struct {
     major: u32,
     minor: u32,
@@ -58,8 +50,25 @@ const Header = struct {
     title: []const u8,
 };
 
-const Data = struct {
-    dataset: ?DataSetType = null,
+const VtkPolyData = struct {
+    points: std.ArrayList(type) = undefined,
+    lines: std.ArrayList(u32) = undefined,
+};
+
+const DataSetType = enum {
+    STRUCTURED_POINTS,
+    STRUCTURED_GRID,
+    UNSTRUCTURED_GRID,
+    RECTILINIEAR_GRID,
+    POLYDATA,
+};
+
+const DataSet = union(enum) {
+    structured_points: u8,
+    structured_grid: u8,
+    unstructured_grid: u8,
+    rectiliniear_grid: u8,
+    polydata: u8,
 };
 
 // https://people.sc.fsu.edu/~jburkardt/data/vtk/vtk.html
@@ -76,7 +85,7 @@ pub const VtkParser = struct {
     byteOrder: ByteOrder = undefined,
     state: VtkParserState,
     header: Header = undefined,
-    data: Data = undefined,
+    data: DataSet = undefined,
     arena: std.heap.ArenaAllocator,
     tokenizer: Tokenizer = undefined,
 
@@ -125,9 +134,7 @@ pub const VtkParser = struct {
             .fileType = undefined,
         };
 
-        var tmpData = Data{
-            .dataset = null,
-        };
+        var tmpData: DataSet = undefined;
 
         for (tokens) |token| {
             switch (token.typ) {
@@ -159,293 +166,46 @@ pub const VtkParser = struct {
                     self.state = .DATASETTYPE_DECL;
                     continue;
                 },
-                else => {
-                    switch (self.state) {
-                        VtkParserState.VERSION_DECL => {
-                            std.debug.print("Version: {s} \n", .{token.lexeme});
-                            var val_it = std.mem.splitAny(u8, token.lexeme, ".");
-                            const tmp_major = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
-                            const tmp_minor = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
-
-                            tmpHeader.version = .{
-                                .major = tmp_major,
-                                .minor = tmp_minor,
-                            };
-                            self.state = .TITLE_DECL;
-                        },
-                        VtkParserState.TITLE_DECL => {
-                            //TODO: parse title
-                            title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme });
-                        },
-                        //VtkParserState.FILETYPE_DECL => {},
-                        VtkParserState.DATASETTYPE_DECL => {
-                            defer self.state = .NOOP;
-                            std.debug.print("Dataset type: {s} \n", .{token.lexeme});
-                            inline for (std.meta.fields(DataSetType)) |field| {
-                                if (std.mem.eql(u8, token.lexeme, field.name))
-                                    tmpData.dataset = @field(DataSetType, field.name);
-                            }
-
-                            if (tmpData.dataset == null) return error.UnsupportedType;
-                        },
-                        else => {},
-                    }
-                },
+                else => {},
             }
-        }
-    }
 
-    fn fparse(self: *@This(), reader: ParserFileReader) !void {
-        var buffer: []u8 = undefined;
+            switch (self.state) {
+                VtkParserState.VERSION_DECL => {
+                    std.debug.print("Version: {s} \n", .{token.lexeme});
+                    var val_it = std.mem.splitAny(u8, token.lexeme, ".");
+                    const tmp_major = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
+                    const tmp_minor = if (val_it.next()) |v| try std.fmt.parseUnsigned(u32, v, 10) else return error.UnexpectedToken;
 
-        while (true) {
-            buffer = try reader.readUntilDelimiterOrEofAlloc(self.arena.allocator(), '\n', 1024) orelse break;
+                    tmpHeader.version = .{
+                        .major = tmp_major,
+                        .minor = tmp_minor,
+                    };
+                    self.state = .TITLE_DECL;
+                },
+                VtkParserState.TITLE_DECL => {
+                    //TODO: parse title
+                    title_buffer = try std.mem.concat(self.arena.allocator(), u8, &[_][]const u8{ title_buffer, token.lexeme });
+                },
+                //VtkParserState.FILETYPE_DECL => {},
+                VtkParserState.DATASETTYPE_DECL => {
+                    defer self.state = .NOOP;
+                    std.debug.print("Dataset type: {s} \n", .{token.lexeme});
 
-            std.debug.print("{s} \n", .{buffer});
-
-            if (std.mem.startsWith(u8, buffer, "#")) {
-                std.debug.print("Found version line \n", .{});
-                _ = try version(buffer);
+                    if (std.mem.eql(u8, token.lexeme, "STRUCTURED_POINTS"))
+                        tmpData = .{ .structured_points = 0 }
+                    else if (std.mem.eql(u8, token.lexeme, "STRUCTURED_GRID"))
+                        tmpData = .{ .structured_grid = 0 }
+                    else if (std.mem.eql(u8, token.lexeme, "UNSTRUCTURED_GRID"))
+                        tmpData = .{ .unstructured_grid = 0 }
+                    else if (std.mem.eql(u8, token.lexeme, "RECTILINEAR_GRID"))
+                        tmpData = .{ .rectiliniear_grid = 0 }
+                    else if (std.mem.eql(u8, token.lexeme, "POLYDATA"))
+                        tmpData = .{ .polydata = 0 }
+                    else
+                        return error.UnsupportedType;
+                },
+                else => {},
             }
-        }
-    }
-
-    fn version(input: []u8) !Version {
-        var index: usize = 0;
-
-        try expectToken(&index, input, "#");
-        try expectToken(&index, input, "vtk");
-        try expectToken(&index, input, "DataFile");
-        try expectToken(&index, input, "Version");
-
-        const major = try parseU32(&index, input);
-        try expectToken(&index, input, ".");
-        const minor = try parseU32(&index, input);
-
-        return Version.new_legacy(major, minor);
-    }
-
-    fn fileType(input: []u8) !FileType {
-        if (std.mem.startsWith(u8, input, "ASCII")) {
-            return FileType.Ascii;
-        } else if (std.mem.startsWith(u8, input, "BINARY")) {
-            return FileType.Binary;
-        } else {
-            return error.InvalidFileType;
-        }
-    }
-
-    fn title(input: []u8) ![]const u8 {
-        return std.utf8.parse(input, "\r\n");
-    }
-
-    fn header(input: []u8) !Header {
-        var index: usize = 0;
-
-        try skipWhitespace(&index, input);
-        const _version = try version(input[index..]);
-        const _title = try title(input[index..]);
-        const _fileType = try fileType(input[index..]);
-
-        return Header{
-            .version = _version,
-            .title = _title,
-            .fileType = _fileType,
-        };
-    }
-
-    fn dataType(input: []u8) !ScalarType {
-        if (std.mem.startsWith(u8, input, "bit")) {
-            return ScalarType.Bit;
-        } else if (std.mem.startsWith(u8, input, "int")) {
-            return ScalarType.I32;
-        } else if (std.mem.startsWith(u8, input, "char")) {
-            return ScalarType.I8;
-        } else if (std.mem.startsWith(u8, input, "long")) {
-            return ScalarType.I64;
-        } else if (std.mem.startsWith(u8, input, "short")) {
-            return ScalarType.I16;
-        } else if (std.mem.startsWith(u8, input, "float")) {
-            return ScalarType.F32;
-        } else if (std.mem.startsWith(u8, input, "double")) {
-            return ScalarType.F64;
-        } else if (std.mem.startsWith(u8, input, "unsigned_int")) {
-            return ScalarType.U32;
-        } else if (std.mem.startsWith(u8, input, "unsigned_char")) {
-            return ScalarType.U8;
-        } else if (std.mem.startsWith(u8, input, "unsigned_long")) {
-            return ScalarType.U64;
-        } else if (std.mem.startsWith(u8, input, "vtkIdType")) {
-            return ScalarType.I32;
-        } else {
-            return error.InvalidDataType;
-        }
-    }
-
-    fn name(input: []u8) ![]const u8 {
-        return std.utf8.parse(input, " \t\r\n");
-    }
-
-    fn attributeData(input: []u8, n: usize, dataT: ScalarType, ft: FileType) ![]u8 {
-        switch (dataT) {
-            ScalarType.Bit => return parseDataBitBuffer(input, n, ft),
-            ScalarType.U8 => return parseDataBufferU8(input, n, ft),
-            ScalarType.I8 => return parseDataBufferI8(input, n, ft),
-            ScalarType.U16 => return parseDataBuffer(u16, input, n, ft),
-            ScalarType.I16 => return parseDataBuffer(i16, input, n, ft),
-            ScalarType.U32 => return parseDataBuffer(u32, input, n, ft),
-            ScalarType.I32 => return parseDataBuffer(i32, input, n, ft),
-            ScalarType.U64 => return parseDataBuffer(u64, input, n, ft),
-            ScalarType.I64 => return parseDataBuffer(i64, input, n, ft),
-            ScalarType.F32 => return parseDataBuffer(f32, input, n, ft),
-            ScalarType.F64 => return parseDataBuffer(f64, input, n, ft),
-        }
-    }
-
-    // Implement other functions similarly...
-
-    fn expectToken(index: *usize, input: []u8, token: []const u8) !void {
-        skipWhitespace(index, input);
-        if (std.mem.startsWith(u8, input[index.*..], token)) {
-            index.* += token.len;
-        } else {
-            return error.UnexpectedToken;
-        }
-    }
-
-    fn parseU32(index: *usize, input: []u8) !u32 {
-        const value = try std.fmt.parseUnsigned(u32, input[index.*..], 10);
-        index.* += @sizeOf(u32);
-        return value;
-    }
-
-    fn skipWhitespace(index: *usize, input: []u8) void {
-        while (index.* < input.len and std.ascii.isWhitespace(input[index.*])) {
-            index.* += 1;
-        }
-    }
-
-    pub fn parseDataBuffer(comptime T: type, comptime BO: ByteOrder, input: []const u8, n: usize, ft: FileType) !IOBuffer {
-        return parseDataVec(T, BO, input, n, ft);
-    }
-
-    pub fn parseDataBufferU8(input: []const u8, n: usize, ft: FileType) !IOBuffer {
-        return parseDataVecU8(input, n, ft);
-    }
-
-    pub fn parseDataBufferI8(input: []const u8, n: usize, ft: FileType) !IOBuffer {
-        return parseDataVecI8(input, n, ft);
-    }
-
-    pub fn parseDataBitBuffer(input: []const u8, n: usize, ft: FileType) !IOBuffer {
-        return parseDataBitVec(input, n, ft);
-    }
-
-    pub fn parseDataVec(comptime T: type, comptime BO: ByteOrder, input: []const u8, n: usize, ft: FileType) ![]T {
-        var result: []T = undefined;
-
-        switch (ft) {
-            FileType.Ascii => {
-                // Example of ASCII parsing - you would need to define fromAscii for each type
-                result = try parseAsciiVec(T, input, n);
-            },
-            FileType.Binary => {
-                // Example of Binary parsing - you would need to define fromBinary for each type
-                result = try parseBinaryVec(T, BO, input, n);
-            },
-        }
-        return result;
-    }
-
-    fn parseAsciiVec(self: *@This(), comptime T: type, input: []const u8, n: usize) ![]T {
-        var result = try self.arena.allocator().alloc(T, n);
-
-        // Iterate over the input, parse ASCII representation to T
-        for (input[0..n], 0) |_, i| {
-            switch (T) {
-                u8 => |_| {
-                    const parsed_value = try std.fmt.parseInt(u8, input[i..], 10);
-                    result[i] = parsed_value;
-                },
-                i8 => |_| {
-                    const parsed_value = try std.fmt.parseInt(i8, input[i..], 10);
-                    result[i] = parsed_value;
-                },
-                else => return error.UnsupportedType,
-            }
-        }
-        return result;
-    }
-
-    fn parseBinaryVec(comptime T: type, comptime BO: type, input: []const u8, n: usize) ![]T {
-        _ = BO; //TODO: Implement validating endianness
-        const allocator = std.heap.page_allocator;
-        var result = try allocator.alloc(T, n);
-
-        // Assuming BO is byte order (BigEndian or LittleEndian)
-        for (input[0 .. n * @sizeOf(T)], 0) |_, i| {
-            const slice = input[i * @sizeOf(T) .. (i + 1) * @sizeOf(T)];
-            switch (T) {
-                u8 => |_| {
-                    result[i] = slice[0]; // u8 doesn't depend on byte order
-                },
-                i8 => |_| {
-                    result[i] = @bitCast(slice[0]); // Cast bytes directly to i8
-                },
-                else => |_| {
-                    return error.UnsupportedType;
-                },
-            }
-        }
-        return result;
-    }
-
-    pub fn parseDataVecU8(input: []const u8, n: usize, ft: FileType) ![]u8 {
-        switch (ft) {
-            FileType.Ascii => {
-                return parseAsciiVec(u8, input, n);
-            },
-            FileType.Binary => {
-                if (input.len < n) {
-                    return error.Incomplete;
-                } else {
-                    return input[0..n];
-                }
-            },
-        }
-    }
-
-    pub fn parseDataVecI8(input: []const u8, n: usize, ft: FileType) ![]i8 {
-        switch (ft) {
-            FileType.Ascii => {
-                return parseAsciiVec(i8, input, n);
-            },
-            FileType.Binary => {
-                if (input.len < n) {
-                    return error.Incomplete;
-                } else {
-                    var result: []i8 = undefined;
-                    result = input[0..n];
-                    return result;
-                }
-            },
-        }
-    }
-
-    pub fn parseDataBitVec(input: []const u8, n: usize, ft: FileType) ![]u8 {
-        const nbytes = (n + 7) / 8;
-
-        if (input.len < nbytes) {
-            return error.Incomplete;
-        }
-
-        switch (ft) {
-            FileType.Ascii => {
-                return parseAsciiVec(u8, input, n);
-            },
-            FileType.Binary => {
-                return input[0..nbytes];
-            },
         }
     }
 };
