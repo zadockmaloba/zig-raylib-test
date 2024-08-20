@@ -191,19 +191,13 @@ pub const Tokenizer = struct {
                         try self.buffer.append(byte_buffer);
                     }
                 },
-                ' ', '\r', '\t' => {
+                ' ', '\n', '\r', '\t' => {
                     if (self.current_token.typ == .COMMENT) {
                         if (byte_buffer == '\n') try self.end_token() else try self.buffer.append(byte_buffer);
                     } else if ((self.current_token.typ == .STRING_LITERAL))
                         try self.buffer.append(byte_buffer)
                     else
                         try self.end_token();
-                },
-                '\n' => {
-                    try self.end_token();
-                    self.current_token.typ = .TERMINAL_CHARACTER;
-                    try self.buffer.append(';');
-                    try self.end_token();
                 },
                 '.' => {
                     //TODO: Make this cleaner
