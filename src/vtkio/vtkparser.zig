@@ -104,6 +104,12 @@ const VtkParserState = enum {
     TITLE_DECL,
     FILETYPE_DECL,
     DATASETTYPE_DECL,
+    POINTS_ARG1,
+    POINTS_ARG2,
+    POINTS_ARR,
+    LINES_ARG1,
+    LINES_ARG2,
+    LINES_ARR,
 };
 
 pub const VtkParser = struct {
@@ -161,6 +167,12 @@ pub const VtkParser = struct {
 
         var tmpData: DataSet = undefined;
 
+        var tmpPointsPtr: *std.ArrayList(Vector3) = undefined;
+        var tmpLinesPtr: *std.ArrayList(Line) = undefined;
+
+        var tmpCoords: [3]f32 = [_]f32{0} ** 3;
+        var tmpCoordCount: u8 = 0;
+
         for (tokens) |token| {
             switch (token.typ) {
                 TokenType.VERSION_KEYWORD => {
@@ -189,6 +201,14 @@ pub const VtkParser = struct {
                 },
                 TokenType.DATASET => {
                     self.state = .DATASETTYPE_DECL;
+                    continue;
+                },
+                TokenType.POINTS => {
+                    self.state = .POINTS_ARG1;
+                    continue;
+                },
+                TokenType.LINES => {
+                    self.state = .LINES_ARG1;
                     continue;
                 },
                 else => {},
@@ -224,13 +244,43 @@ pub const VtkParser = struct {
                         tmpData = .{ .unstructured_grid = 0 }
                     else if (std.mem.eql(u8, token.lexeme, "RECTILINEAR_GRID"))
                         tmpData = .{ .rectiliniear_grid = 0 }
-                    else if (std.mem.eql(u8, token.lexeme, "POLYDATA"))
-                        tmpData = .{ .polydata = undefined }
-                    else
-                        return error.UnsupportedType;
+                    else if (std.mem.eql(u8, token.lexeme, "POLYDATA")) {
+                        tmpData = .{
+                            .polydata = VtkPolyData.init(self.arena.allocator()),
+                        };
+                        tmpPointsPtr = &tmpData.polydata.points;
+                        tmpLinesPtr = &tmpData.polydata.lines;
+                    } else return error.UnsupportedType;
+                },
+                VtkParserState.POINTS_ARG1 => {
+                    self.state = .POINTS_ARG2;
+                    std.debug.print("Trying to parse value: {s}\n", .{token.lexeme});
+                    const new_size = try std.fmt.parseUnsigned(u32, token.lexeme, 10);
+
+                    try tmpPointsPtr.ensureTotalCapacity(new_size);
+                },
+                VtkParserState.POINTS_ARG2 => {
+                    //Ignore arg 2 - assume we only have floats
+                    self.state = .POINTS_ARR;
+                    continue;
+                },
+                VtkParserState.POINTS_ARR => {
+                    tmpCoords[tmpCoordCount] = try std.fmt.parseFloat(f32, token.lexeme);
+                    tmpCoordCount += 1;
+
+                    if (tmpCoordCount == 3) {
+                        tmpCoordCount = 0;
+                        try tmpPointsPtr.append(.{
+                            .x = tmpCoords[0],
+                            .y = tmpCoords[1],
+                            .z = tmpCoords[2],
+                        });
+                    }
                 },
                 else => {},
             }
         }
+
+        std.debug.print("TMP DATA: {any} \n", .{tmpData});
     }
 };
