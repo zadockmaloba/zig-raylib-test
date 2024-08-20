@@ -8,7 +8,15 @@ const ray = @cImport({
     @cInclude("raylib.h");
 });
 
-pub fn main() void {}
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer std.debug.assert(gpa.deinit() == std.heap.Check.ok);
+
+    var parser = vtkparser.init(gpa.allocator());
+    defer parser.deinit();
+
+    _ = try parser.fevaluate("./test/hello.vtk");
+}
 
 test "simple test" {
     var list = std.ArrayList(i32).init(std.testing.allocator);
@@ -85,11 +93,12 @@ test "Display simple structured polydata from buffer" {
 
     ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
     errdefer ray.CloseWindow();
-    defer ray.CloseWindow(); // Close window and OpenGL context
+    //defer ray.CloseWindow(); // Close window and OpenGL context
 
     ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
-
-    while (!ray.WindowShouldClose()) // Detect window close button or ESC key
+    //
+    var i: u8 = 0;
+    while (i < 200) : (i += 1) // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -124,4 +133,8 @@ test "Display simple structured polydata from buffer" {
         //ray.DrawPolyLinesEx(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 85, rotation, 6, ray.BEIGE);
         //----------------------------------------------------------------------------------
     }
+
+    ray.CloseWindow();
+
+    return;
 }
