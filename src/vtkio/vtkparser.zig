@@ -277,10 +277,36 @@ pub const VtkParser = struct {
                         });
                     }
                 },
+                VtkParserState.LINES_ARG1 => {
+                    self.state = .LINES_ARG2;
+                    tmpCoordCount = 0;
+                    std.debug.print("Trying parse value: {s}\n", .{token.lexeme});
+                    const new_size = try std.fmt.parseUnsigned(u32, token.lexeme, 10);
+
+                    try tmpLinesPtr.ensureTotalCapacity(new_size);
+                },
+                VtkParserState.LINES_ARG2 => {
+                    self.state = .LINES_ARR;
+                    continue;
+                },
+                VtkParserState.LINES_ARR => {
+                    //FIXME: Implement a better way to do this
+                    tmpCoords[tmpCoordCount] = @floatFromInt(try std.fmt.parseUnsigned(u32, token.lexeme, 10));
+                    tmpCoordCount += 1;
+
+                    if (tmpCoordCount == 3) {
+                        tmpCoordCount = 0;
+                        try tmpLinesPtr.append(.{
+                            .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[1])],
+                            .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[2])],
+                        });
+                    }
+                },
                 else => {},
             }
         }
 
-        std.debug.print("TMP DATA: {any} \n", .{tmpData});
+        self.data = tmpData;
+        std.debug.print("TMP DATA: {any} \n", .{self.data});
     }
 };
