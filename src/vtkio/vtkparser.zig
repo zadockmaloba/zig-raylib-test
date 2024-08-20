@@ -58,7 +58,7 @@ const VtkPolyData = struct {
     points: std.ArrayList(Vector3) = undefined,
     lines: std.ArrayList(Line) = undefined,
     allocator: std.mem.Allocator,
-    drawLineFn: ?fn (start: Vector3, end: Vector3) void = null,
+    drawLineFn: ?*const fn (start: Vector3, end: Vector3) void = null,
 
     pub fn init(allocator: std.mem.Allocator) VtkPolyData {
         return .{
