@@ -1,6 +1,7 @@
 const std = @import("std");
 const tokenizer_namespace = @import("vtktokenizer.zig");
 const commontypes_namespace = @import("../common/types.zig");
+const utils = @import("../common/utils.zig");
 
 const TokenType = tokenizer_namespace.TokenType;
 const Token = tokenizer_namespace.Token;
@@ -270,10 +271,11 @@ pub const VtkParser = struct {
 
                     if (tmpCoordCount == 3) {
                         tmpCoordCount = 0;
+                        //FIXME: We need to normalize the points matrix instead of hardcoding here
                         try tmpPointsPtr.append(.{
-                            .x = tmpCoords[0],
-                            .y = tmpCoords[1],
-                            .z = tmpCoords[2],
+                            .x = tmpCoords[0] / 5,
+                            .y = tmpCoords[1] / 5,
+                            .z = tmpCoords[2] / 5,
                         });
                     }
                 },

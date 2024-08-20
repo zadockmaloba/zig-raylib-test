@@ -19,7 +19,7 @@ pub fn main() !void {
     var parser = vtkparser.init(gpa.allocator());
     defer parser.deinit();
 
-    _ = try parser.fevaluate("./test/vtk.vtk");
+    _ = try parser.fevaluate("./test/hello.vtk");
 
     const camera = ray.Camera{
         .position = Vector3{ .x = 0.0, .y = 0.0, .z = 10.0 },
@@ -29,7 +29,7 @@ pub fn main() !void {
         .projection = ray.CAMERA_PERSPECTIVE,
     };
 
-    ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    ray.InitWindow(screen_width, screen_height, "Zig - VTK parser/renderer");
     errdefer ray.CloseWindow();
     defer ray.CloseWindow(); // Close window and OpenGL context
 
@@ -39,13 +39,12 @@ pub fn main() !void {
         ray.BeginDrawing();
         defer ray.EndDrawing();
 
-        ray.ClearBackground(ray.RAYWHITE);
-        //ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
+        ray.ClearBackground(ray.BLACK);
         ray.BeginMode3D(camera);
         defer ray.EndMode3D();
 
         for (parser.data.polydata.lines.items) |line| {
-            ray.DrawLine3D(line.start, line.end, ray.BLUE);
+            ray.DrawLine3D(line.start, line.end, ray.ORANGE);
         }
     }
 }
