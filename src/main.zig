@@ -9,13 +9,45 @@ const ray = @cImport({
 });
 
 pub fn main() !void {
+    const screen_width = 800;
+    const screen_height = 450;
+    //const rotation = 0.0;
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == std.heap.Check.ok);
 
     var parser = vtkparser.init(gpa.allocator());
     defer parser.deinit();
 
-    _ = try parser.fevaluate("./test/hello.vtk");
+    _ = try parser.fevaluate("./test/vtk.vtk");
+
+    const camera = ray.Camera{
+        .position = Vector3{ .x = 0.0, .y = 0.0, .z = 10.0 },
+        .target = Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
+        .up = Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
+        .fovy = 45.0,
+        .projection = ray.CAMERA_PERSPECTIVE,
+    };
+
+    ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    errdefer ray.CloseWindow();
+    defer ray.CloseWindow(); // Close window and OpenGL context
+
+    ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+
+    while (!ray.WindowShouldClose()) {
+        ray.BeginDrawing();
+        defer ray.EndDrawing();
+
+        ray.ClearBackground(ray.RAYWHITE);
+        //ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
+        ray.BeginMode3D(camera);
+        defer ray.EndMode3D();
+
+        for (parser.data.polydata.lines.items) |line| {
+            ray.DrawLine3D(line.start, line.end, ray.BLUE);
+        }
+    }
 }
 
 test "simple test" {
