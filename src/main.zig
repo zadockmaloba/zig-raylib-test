@@ -1,16 +1,12 @@
 const std = @import("std");
 const vtkparser = @import("vtkio/vtkparser.zig").VtkParser;
+const commontypes_namespace = @import("common/types.zig");
+const Vector3 = commontypes_namespace.Vector3;
+const Line = commontypes_namespace.Line;
 
 const ray = @cImport({
     @cInclude("raylib.h");
 });
-
-const Vector3 = ray.Vector3;
-
-const Line = struct {
-    start: Vector3,
-    end: Vector3,
-};
 
 pub fn main() void {}
 
@@ -31,101 +27,101 @@ test "Simple VTK file parsing test" {
     _ = try parser.fevaluate("./test/hello.vtk");
 }
 
-// test "Display simple structured polydata from buffer" {
-//     const screen_width = 800;
-//     const screen_height = 450;
-//     const rotation = 0.0;
+test "Display simple structured polydata from buffer" {
+    const screen_width = 800;
+    const screen_height = 450;
+    const rotation = 0.0;
 
-//     const points: [22]Vector3 = [22]Vector3{
-//         Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 0.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
-//         Vector3{ .x = 1.0, .y = 1.0, .z = 0.0 },
-//         Vector3{ .x = 1.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 1.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 2.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 3.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 2.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 3.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 2.0, .y = 1.0, .z = 0.0 },
-//         Vector3{ .x = 3.0, .y = 1.0, .z = 0.0 },
-//         Vector3{ .x = 4.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 5.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 4.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 6.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 7.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 6.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 8.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 9.0, .y = 0.0, .z = 0.0 },
-//         Vector3{ .x = 8.0, .y = 2.0, .z = 0.0 },
-//         Vector3{ .x = 9.0, .y = 2.0, .z = 0.0 },
-//     };
+    const points: [22]Vector3 = [22]Vector3{
+        Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 0.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
+        Vector3{ .x = 1.0, .y = 1.0, .z = 0.0 },
+        Vector3{ .x = 1.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 1.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 2.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 3.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 2.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 3.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 2.0, .y = 1.0, .z = 0.0 },
+        Vector3{ .x = 3.0, .y = 1.0, .z = 0.0 },
+        Vector3{ .x = 4.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 5.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 4.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 6.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 7.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 6.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 8.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 9.0, .y = 0.0, .z = 0.0 },
+        Vector3{ .x = 8.0, .y = 2.0, .z = 0.0 },
+        Vector3{ .x = 9.0, .y = 2.0, .z = 0.0 },
+    };
 
-//     const lines: [15]Line = [_]Line{
-//         Line{ .start = points[0], .end = points[1] },
-//         Line{ .start = points[4], .end = points[5] },
-//         Line{ .start = points[2], .end = points[3] },
-//         Line{ .start = points[6], .end = points[8] },
-//         Line{ .start = points[6], .end = points[7] },
-//         Line{ .start = points[10], .end = points[11] },
-//         Line{ .start = points[8], .end = points[9] },
-//         Line{ .start = points[12], .end = points[13] },
-//         Line{ .start = points[12], .end = points[14] },
-//         Line{ .start = points[15], .end = points[16] },
-//         Line{ .start = points[15], .end = points[17] },
-//         Line{ .start = points[18], .end = points[19] },
-//         Line{ .start = points[20], .end = points[21] },
-//         Line{ .start = points[18], .end = points[20] },
-//         Line{ .start = points[19], .end = points[21] },
-//     };
+    const lines: [15]Line = [_]Line{
+        Line{ .start = points[0], .end = points[1] },
+        Line{ .start = points[4], .end = points[5] },
+        Line{ .start = points[2], .end = points[3] },
+        Line{ .start = points[6], .end = points[8] },
+        Line{ .start = points[6], .end = points[7] },
+        Line{ .start = points[10], .end = points[11] },
+        Line{ .start = points[8], .end = points[9] },
+        Line{ .start = points[12], .end = points[13] },
+        Line{ .start = points[12], .end = points[14] },
+        Line{ .start = points[15], .end = points[16] },
+        Line{ .start = points[15], .end = points[17] },
+        Line{ .start = points[18], .end = points[19] },
+        Line{ .start = points[20], .end = points[21] },
+        Line{ .start = points[18], .end = points[20] },
+        Line{ .start = points[19], .end = points[21] },
+    };
 
-//     const camera = ray.Camera{
-//         .position = Vector3{ .x = 0.0, .y = 0.0, .z = 10.0 },
-//         .target = Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
-//         .up = Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
-//         .fovy = 45.0,
-//         .projection = ray.CAMERA_PERSPECTIVE,
-//     };
+    const camera = ray.Camera{
+        .position = Vector3{ .x = 0.0, .y = 0.0, .z = 10.0 },
+        .target = Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
+        .up = Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
+        .fovy = 45.0,
+        .projection = ray.CAMERA_PERSPECTIVE,
+    };
 
-//     ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
-//     errdefer ray.CloseWindow();
-//     defer ray.CloseWindow(); // Close window and OpenGL context
+    ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    errdefer ray.CloseWindow();
+    defer ray.CloseWindow(); // Close window and OpenGL context
 
-//     ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 
-//     while (!ray.WindowShouldClose()) // Detect window close button or ESC key
-//     {
-//         // Update
-//         //----------------------------------------------------------------------------------
-//         //ray.UpdateCamera(&camera, 0);
-//         //----------------------------------------------------------------------------------
+    while (!ray.WindowShouldClose()) // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        //ray.UpdateCamera(&camera, 0);
+        //----------------------------------------------------------------------------------
 
-//         // Draw
-//         //----------------------------------------------------------------------------------
-//         ray.BeginDrawing();
-//         defer ray.EndDrawing();
+        // Draw
+        //----------------------------------------------------------------------------------
+        ray.BeginDrawing();
+        defer ray.EndDrawing();
 
-//         ray.ClearBackground(ray.RAYWHITE);
-//         //ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
-//         ray.BeginMode3D(camera);
-//         defer ray.EndMode3D();
+        ray.ClearBackground(ray.RAYWHITE);
+        //ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
+        ray.BeginMode3D(camera);
+        defer ray.EndMode3D();
 
-//         ray.DrawPoint3D(.{ .x = 20, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 21, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 22, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 23, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 24, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 25, .y = 20, .z = 1 }, ray.RED);
-//         ray.DrawPoint3D(.{ .x = 26, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 20, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 21, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 22, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 23, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 24, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 25, .y = 20, .z = 1 }, ray.RED);
+        ray.DrawPoint3D(.{ .x = 26, .y = 20, .z = 1 }, ray.RED);
 
-//         inline for (lines) |line| {
-//             ray.DrawLine3D(line.start, line.end, ray.BLUE);
-//         }
+        inline for (lines) |line| {
+            ray.DrawLine3D(line.start, line.end, ray.BLUE);
+        }
 
-//         // Polygon shapes and lines
-//         //ray.DrawPoly(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 80, rotation, ray.BROWN);
-//         ray.DrawPolyLines(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 90, rotation, ray.BROWN);
-//         //ray.DrawPolyLinesEx(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 85, rotation, 6, ray.BEIGE);
-//         //----------------------------------------------------------------------------------
-//     }
-// }
+        // Polygon shapes and lines
+        //ray.DrawPoly(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 80, rotation, ray.BROWN);
+        ray.DrawPolyLines(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 90, rotation, ray.BROWN);
+        //ray.DrawPolyLinesEx(.{ .x = screen_width / 4.0 * 3, .y = 330 }, 6, 85, rotation, 6, ray.BEIGE);
+        //----------------------------------------------------------------------------------
+    }
+}
