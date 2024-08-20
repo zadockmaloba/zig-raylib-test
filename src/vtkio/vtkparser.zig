@@ -1,9 +1,13 @@
 const std = @import("std");
 const tokenizer_namespace = @import("vtktokenizer.zig");
+const commontypes_namespace = @import("../common/types.zig");
 
 const TokenType = tokenizer_namespace.TokenType;
 const Token = tokenizer_namespace.Token;
 const Tokenizer = tokenizer_namespace.Tokenizer;
+
+const Vector3 = commontypes_namespace.Vector3;
+const Line = commontypes_namespace.Line;
 
 const ParserFileReader = *std.io.BufferedReader(4096, std.fs.File.Reader).Reader;
 
@@ -51,8 +55,29 @@ const Header = struct {
 };
 
 const VtkPolyData = struct {
-    points: std.ArrayList(type) = undefined,
-    lines: std.ArrayList(u32) = undefined,
+    points: std.ArrayList(Vector3) = undefined,
+    lines: std.ArrayList(Line) = undefined,
+    allocator: std.mem.Allocator,
+    drawLineFn: ?fn (start: Vector3, end: Vector3) void = null,
+
+    pub fn init(allocator: std.mem.Allocator) VtkPolyData {
+        return .{
+            .allocator = allocator,
+            .points = std.ArrayList(Vector3).init(allocator),
+            .lines = std.ArrayList(Line).init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *@This()) void {
+        self.points.deinit();
+        self.lines.deinit();
+    }
+
+    pub fn render(self: *@This()) !void {
+        if (self.drawLineFn != null)
+            for (self.lines.items) |line|
+                self.drawLineFn(line.start, line.end);
+    }
 };
 
 const DataSetType = enum {
@@ -68,7 +93,7 @@ const DataSet = union(enum) {
     structured_grid: u8,
     unstructured_grid: u8,
     rectiliniear_grid: u8,
-    polydata: u8,
+    polydata: VtkPolyData,
 };
 
 // https://people.sc.fsu.edu/~jburkardt/data/vtk/vtk.html
@@ -200,7 +225,7 @@ pub const VtkParser = struct {
                     else if (std.mem.eql(u8, token.lexeme, "RECTILINEAR_GRID"))
                         tmpData = .{ .rectiliniear_grid = 0 }
                     else if (std.mem.eql(u8, token.lexeme, "POLYDATA"))
-                        tmpData = .{ .polydata = 0 }
+                        tmpData = .{ .polydata = undefined }
                     else
                         return error.UnsupportedType;
                 },
