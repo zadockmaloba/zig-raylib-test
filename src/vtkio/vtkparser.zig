@@ -124,7 +124,7 @@ pub const VtkParser = struct {
 
         try self.tokenizer.start(&reader);
 
-        const tokens = self.tokenizer.tokens.allocatedSlice();
+        const tokens = self.tokenizer.tokens.items;
 
         var title_buffer: []const u8 = "";
 
