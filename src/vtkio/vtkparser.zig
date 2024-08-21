@@ -273,9 +273,9 @@ pub const VtkParser = struct {
                         tmpCoordCount = 0;
                         //FIXME: We need to normalize the points matrix instead of hardcoding here
                         try tmpPointsPtr.append(.{
-                            .x = tmpCoords[0] / 5,
-                            .y = tmpCoords[1] / 5,
-                            .z = tmpCoords[2] / 5,
+                            .x = tmpCoords[0],
+                            .y = tmpCoords[1],
+                            .z = tmpCoords[2],
                         });
                     }
                 },
