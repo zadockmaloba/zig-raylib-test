@@ -75,7 +75,7 @@ test "simple vtk file parsing test" {
     var parser = vtkparser.init(gpa.allocator());
     defer parser.deinit();
 
-    _ = try parser.fevaluate("./test/vtk.vtk");
+    _ = try parser.fevaluate("./test/hello.vtk");
 }
 
 test "display simple structured polydata from buffer" {
