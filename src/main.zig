@@ -1,4 +1,7 @@
 const std = @import("std");
+const zlm = @import("zlm");
+
+const utils = @import("common/utils.zig");
 const vtkparser = @import("vtkio/vtkparser.zig").VtkParser;
 const commontypes_namespace = @import("common/types.zig");
 const Vector3 = commontypes_namespace.Vector3;
@@ -56,22 +59,31 @@ test "simple test" {
     try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
 
-test "Simple VTK file parsing test" {
+test "simple zlm test" {
+    const math = zlm;
+
+    var v = math.Vec3.new(200, 10.0, 4.0);
+    var a = math.Vec3.new(310, 120, 10);
+    const res = v.add(a.scale(2.0));
+    std.debug.print("Result: {} \n", .{res});
+}
+
+test "simple vtk file parsing test" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == std.heap.Check.ok);
 
     var parser = vtkparser.init(gpa.allocator());
     defer parser.deinit();
 
-    _ = try parser.fevaluate("./test/hello.vtk");
+    _ = try parser.fevaluate("./test/vtk.vtk");
 }
 
-test "Display simple structured polydata from buffer" {
+test "display simple structured polydata from buffer" {
     const screen_width = 800;
     const screen_height = 450;
     const rotation = 0.0;
 
-    const points: [22]Vector3 = [22]Vector3{
+    var points: [22]Vector3 = [22]Vector3{
         Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
         Vector3{ .x = 0.0, .y = 2.0, .z = 0.0 },
         Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
@@ -95,6 +107,8 @@ test "Display simple structured polydata from buffer" {
         Vector3{ .x = 8.0, .y = 2.0, .z = 0.0 },
         Vector3{ .x = 9.0, .y = 2.0, .z = 0.0 },
     };
+
+    utils.normalizePoints(points[0..]);
 
     const lines: [15]Line = [_]Line{
         Line{ .start = points[0], .end = points[1] },

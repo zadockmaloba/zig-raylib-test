@@ -21,6 +21,8 @@ pub fn build(b: *std.Build) void {
     //     .optimize = optimize,
     // });
 
+    const zlm = b.dependency("zlm", .{});
+
     // _ = raylib;
 
     // const raylib_builder = @import("./thirdparty/raylib/build.zig");
@@ -33,6 +35,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    exe.root_module.addImport("zlm", zlm.module("zlm"));
 
     exe.linkLibC();
     exe.addObjectFile(switch (target.result.os.tag) {
@@ -118,6 +122,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    exe_unit_tests.root_module.addImport("zlm", zlm.module("zlm"));
 
     exe_unit_tests.linkLibC();
     exe_unit_tests.addObjectFile(switch (target.result.os.tag) {
