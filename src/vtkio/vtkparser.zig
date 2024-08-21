@@ -271,7 +271,6 @@ pub const VtkParser = struct {
 
                     if (tmpCoordCount == 3) {
                         tmpCoordCount = 0;
-                        //FIXME: We need to normalize the points matrix instead of hardcoding here
                         try tmpPointsPtr.append(.{
                             .x = tmpCoords[0],
                             .y = tmpCoords[1],
@@ -286,6 +285,8 @@ pub const VtkParser = struct {
                     const new_size = try std.fmt.parseUnsigned(u32, token.lexeme, 10);
 
                     try tmpLinesPtr.ensureTotalCapacity(new_size);
+                    //TODO: Find a better place to put this
+                    utils.normalizePoints(tmpPointsPtr.items);
                 },
                 VtkParserState.LINES_ARG2 => {
                     self.state = .LINES_ARR;
@@ -307,7 +308,6 @@ pub const VtkParser = struct {
                 else => {},
             }
         }
-
         self.data = tmpData;
         std.debug.print("TMP DATA: {any} \n", .{self.data});
     }
