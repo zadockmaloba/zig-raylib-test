@@ -309,13 +309,22 @@ pub const VtkParser = struct {
                     }
 
                     if (tmpCoordCount == tmpCoordLimit) {
+                        var idx: u8 = 0;
+                        //TODO: Optimize this
+                        while (idx <= tmpCoordLimit) : (idx += 2) {
+                            if ((tmpCoordLimit - idx) == 1) {
+                                try tmpLinesPtr.append(.{
+                                    .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[idx - 1])],
+                                    .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[idx])],
+                                });
+                            } else try tmpLinesPtr.append(.{
+                                .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[idx])],
+                                .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[idx + 1])],
+                            });
+                        }
                         tmpCoordCount = 0;
                         tmpCoordLimit = 0;
-                        try tmpLinesPtr.append(.{
-                            .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[0])],
-                            .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[1])],
-                        });
-                    } else if (tmpCoordCount > 2) {}
+                    } //else if (tmpCoordCount > 2) {}
                 },
                 else => {},
             }
