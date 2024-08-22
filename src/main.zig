@@ -16,13 +16,16 @@ pub fn main() !void {
     const screen_height = 450;
     //const rotation = 0.0;
 
+    const args = std.os.argv;
+    std.debug.print("Args: {s} \n", .{args[0]});
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == std.heap.Check.ok);
 
     var parser = vtkparser.init(gpa.allocator());
     defer parser.deinit();
 
-    _ = try parser.fevaluate("./test/hello.vtk");
+    _ = try parser.fevaluate("./test/vtk.vtk");
 
     const camera = ray.Camera{
         .position = Vector3{ .x = 0.0, .y = 0.0, .z = 10.0 },
