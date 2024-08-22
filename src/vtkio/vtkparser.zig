@@ -171,8 +171,10 @@ pub const VtkParser = struct {
         var tmpPointsPtr: *std.ArrayList(Vector3) = undefined;
         var tmpLinesPtr: *std.ArrayList(Line) = undefined;
 
-        var tmpCoords: [3]f32 = [_]f32{0} ** 3;
+        //store coords in a 256 byte buffer
+        var tmpCoords: [256]f32 = [_]f32{0} ** 256;
         var tmpCoordCount: u8 = 0;
+        var tmpCoordLimit: u8 = 0;
 
         for (tokens) |token| {
             switch (token.typ) {
@@ -287,6 +289,7 @@ pub const VtkParser = struct {
                     try tmpLinesPtr.ensureTotalCapacity(new_size);
                     //TODO: Find a better place to put this
                     utils.normalizePoints(tmpPointsPtr.items);
+                    continue;
                 },
                 VtkParserState.LINES_ARG2 => {
                     self.state = .LINES_ARR;
@@ -294,16 +297,25 @@ pub const VtkParser = struct {
                 },
                 VtkParserState.LINES_ARR => {
                     //FIXME: Implement a better way to do this
-                    tmpCoords[tmpCoordCount] = @floatFromInt(try std.fmt.parseUnsigned(u32, token.lexeme, 10));
-                    tmpCoordCount += 1;
+                    if (tmpCoordLimit == 0) {
+                        //FIXME: Assuming the max number of line points is 256
+                        tmpCoordLimit = try std.fmt.parseUnsigned(u8, token.lexeme, 10);
 
-                    if (tmpCoordCount == 3) {
-                        tmpCoordCount = 0;
-                        try tmpLinesPtr.append(.{
-                            .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[1])],
-                            .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[2])],
-                        });
+                        std.debug.print("Number of line points: {} \n", .{tmpCoordLimit});
+                        continue;
+                    } else {
+                        tmpCoords[tmpCoordCount] = @floatFromInt(try std.fmt.parseUnsigned(u32, token.lexeme, 10));
+                        tmpCoordCount += 1;
                     }
+
+                    if (tmpCoordCount == tmpCoordLimit) {
+                        tmpCoordCount = 0;
+                        tmpCoordLimit = 0;
+                        try tmpLinesPtr.append(.{
+                            .start = tmpPointsPtr.items[@intFromFloat(tmpCoords[0])],
+                            .end = tmpPointsPtr.items[@intFromFloat(tmpCoords[1])],
+                        });
+                    } else if (tmpCoordCount > 2) {}
                 },
                 else => {},
             }
