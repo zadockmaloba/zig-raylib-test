@@ -4,6 +4,12 @@
 
 * Zig - 0.13.0
 
+
+``
+cd ./zig-raylib-test/ &&
+zig build run
+``
+
 ## Purpose
 * The main purpose of this repo is to finally load VTK files via opengl
 * I'm using raylib since it will abstract most of the complexities
@@ -18,6 +24,8 @@
 - [ ] Render complex 3D objects with raylib (Cone, Sphere, Donut)
 - [ ] Develop basic camera controls (e.g., orbit, zoom, pan) for interacting with 3D models.
 - [x] Implement functionality to load VTK files.
+      <img width="849" alt="Screenshot 2024-08-21 at 22 12 35" src="https://github.com/user-attachments/assets/0416d161-3564-43dc-b6bd-26cff400e913">
+      <img width="877" alt="Screenshot 2024-08-22 at 09 48 46" src="https://github.com/user-attachments/assets/7a9704cc-0043-4ec2-adfd-a4f7e277c6fe">
 - [ ] Parse the VTK file format to extract vertex, edge, and polygon data.
 - [ ] Write and integrate vertex and fragment shaders for rendering the VTK data.
 - [ ] Implement basic lighting and shading.
