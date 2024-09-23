@@ -172,9 +172,9 @@ pub const VtkParser = struct {
         var tmpLinesPtr: *std.ArrayList(Line) = undefined;
 
         //store coords in a 256 byte buffer
-        var tmpCoords: [256]f32 = [_]f32{0} ** 256;
-        var tmpCoordCount: u8 = 0;
-        var tmpCoordLimit: u8 = 0;
+        var tmpCoords: [1024]f32 = [_]f32{0} ** 1024;
+        var tmpCoordCount: u32 = 0;
+        var tmpCoordLimit: u32 = 0;
 
         for (tokens) |token| {
             switch (token.typ) {
@@ -212,6 +212,26 @@ pub const VtkParser = struct {
                 },
                 TokenType.LINES => {
                     self.state = .LINES_ARG1;
+                    continue;
+                },
+                TokenType.POLYGONS => {
+                    //TODO: Implement polygons parsing
+                    self.state = .NOOP;
+                    continue;
+                },
+                TokenType.VERTICES => {
+                    //TODO: Implement polygons parsing
+                    self.state = .NOOP;
+                    continue;
+                },
+                TokenType.TRIANGLE_STRIPS => {
+                    //TODO: Implement polygons parsing
+                    self.state = .NOOP;
+                    continue;
+                },
+                TokenType.POINT_DATA => {
+                    //TODO: Implement polygons parsing
+                    self.state = .NOOP;
                     continue;
                 },
                 else => {},
@@ -299,7 +319,7 @@ pub const VtkParser = struct {
                     //FIXME: Implement a better way to do this
                     if (tmpCoordLimit == 0) {
                         //FIXME: Assuming the max number of line points is 256
-                        tmpCoordLimit = try std.fmt.parseUnsigned(u8, token.lexeme, 10);
+                        tmpCoordLimit = try std.fmt.parseUnsigned(u32, token.lexeme, 10);
 
                         std.debug.print("Number of line points: {} \n", .{tmpCoordLimit});
                         continue;
@@ -309,7 +329,7 @@ pub const VtkParser = struct {
                     }
 
                     if (tmpCoordCount == tmpCoordLimit) {
-                        var idx: u8 = 0;
+                        var idx: u32 = 0;
                         //TODO: Optimize this
                         while (idx <= tmpCoordLimit) : (idx += 2) {
                             if ((tmpCoordLimit - idx) == 1) {
