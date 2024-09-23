@@ -1,15 +1,12 @@
 const std = @import("std");
 const zlm = @import("zlm");
+const ray = @import("raylib");
 
 const utils = @import("common/utils.zig");
 const vtkparser = @import("vtkio/vtkparser.zig").VtkParser;
 const commontypes_namespace = @import("common/types.zig");
 const Vector3 = commontypes_namespace.Vector3;
 const Line = commontypes_namespace.Line;
-
-const ray = @cImport({
-    @cInclude("raylib.h");
-});
 
 pub fn main() !void {
     const screen_width = 800;
@@ -32,25 +29,25 @@ pub fn main() !void {
         .target = Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .up = Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
         .fovy = 45.0,
-        .projection = ray.CAMERA_PERSPECTIVE,
+        .projection = .camera_perspective,
     };
 
-    ray.InitWindow(screen_width, screen_height, "Zig - VTK parser/renderer");
-    errdefer ray.CloseWindow();
-    defer ray.CloseWindow(); // Close window and OpenGL context
+    ray.initWindow(screen_width, screen_height, "Zig - VTK parser/renderer");
+    errdefer ray.closeWindow();
+    defer ray.closeWindow(); // Close window and OpenGL context
 
-    ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    ray.setTargetFPS(60); // Set our game to run at 60 frames-per-second
 
-    while (!ray.WindowShouldClose()) {
-        ray.BeginDrawing();
-        defer ray.EndDrawing();
+    while (!ray.windowShouldClose()) {
+        ray.beginDrawing();
+        defer ray.endDrawing();
 
-        ray.ClearBackground(ray.BLACK);
-        ray.BeginMode3D(camera);
-        defer ray.EndMode3D();
+        ray.clearBackground(ray.getColor(0x000000FF));
+        ray.beginMode3D(camera);
+        defer ray.endMode3D();
 
         for (parser.data.polydata.lines.items) |line| {
-            ray.DrawLine3D(line.start, line.end, ray.ORANGE);
+            ray.drawLine3D(line.start, line.end, ray.getColor(0x00FF00FF));
         }
     }
 }
@@ -136,14 +133,14 @@ test "display simple structured polydata from buffer" {
         .target = Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .up = Vector3{ .x = 0.0, .y = 1.0, .z = 0.0 },
         .fovy = 45.0,
-        .projection = ray.CAMERA_PERSPECTIVE,
+        .projection = .camera_perspective,
     };
 
-    ray.InitWindow(screen_width, screen_height, "raylib [core] example - basic window");
-    errdefer ray.CloseWindow();
+    ray.initWindow(screen_width, screen_height, "raylib [core] example - basic window");
+    errdefer ray.closeWindow();
     //defer ray.CloseWindow(); // Close window and OpenGL context
 
-    ray.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    ray.setTargetFPS(60); // Set our game to run at 60 frames-per-second
     //
     var i: u8 = 0;
     while (i < 200) : (i += 1) // Detect window close button or ESC key
@@ -155,24 +152,24 @@ test "display simple structured polydata from buffer" {
 
         // Draw
         //----------------------------------------------------------------------------------
-        ray.BeginDrawing();
-        defer ray.EndDrawing();
+        ray.beginDrawing();
+        defer ray.endDrawing();
 
-        ray.ClearBackground(ray.RAYWHITE);
+        ray.clearBackground(ray.RAYWHITE);
         //ray.DrawText("Congrats! You created your first window!", 190, 200, 20, ray.LIGHTGRAY);
-        ray.BeginMode3D(camera);
-        defer ray.EndMode3D();
+        ray.beginMode3D(camera);
+        defer ray.endMode3D();
 
-        ray.DrawPoint3D(.{ .x = 20, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 21, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 22, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 23, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 24, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 25, .y = 20, .z = 1 }, ray.RED);
-        ray.DrawPoint3D(.{ .x = 26, .y = 20, .z = 1 }, ray.RED);
+        ray.drawPoint3D(.{ .x = 20, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 21, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 22, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 23, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 24, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 25, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
+        ray.drawPoint3D(.{ .x = 26, .y = 20, .z = 1 }, ray.getColor(0xFF0000FF));
 
         inline for (lines) |line| {
-            ray.DrawLine3D(line.start, line.end, ray.BLUE);
+            ray.drawLine3D(line.start, line.end, ray.getColor(0xFF0000FF));
         }
 
         // Polygon shapes and lines

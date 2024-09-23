@@ -8,10 +8,11 @@
     .dependencies = .{
 
         // TODO: Figure out a way to use raylib as a module
-        .raylib = .{
-            .path = "./thirdparty/raylib",
+        .raylib_zig = .{
+            .url = "https://github.com/Not-Nik/raylib-zig/archive/refs/tags/v5.1-dev.tar.gz",
+            .hash = "1220df9aa89d657f5dca24ab0ac3d187f7a992a4d27461fd9e76e934bf0670ca9a90",
+            .lazy = false,
         },
-
         .zlm = .{
             .url = "https://github.com/ziglibs/zlm/archive/refs/heads/master.tar.gz",
             .hash = "1220342ac333965de915f74a8425e4848ffe46852da0e4789103f9ec650c3cd22456",

@@ -1,8 +1,5 @@
 const std = @import("std");
-
-const ray = @cImport({
-    @cInclude("raylib.h");
-});
+const ray = @import("raylib");
 
 pub const Vector3 = ray.Vector3;
 pub const Vector4 = ray.Vector4;
